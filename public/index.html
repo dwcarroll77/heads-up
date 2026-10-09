@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danny's Head's Up</title>
+<meta name="description" content="Everyone gets a character. You can see everyone else's but your own.">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Karla:wght@400;500;700&family=Martian+Mono:wght@400;600&display=swap">
+<style>
+  /* This game commits to one visual world — paper tags on a dark table — so
+     every colour is painted explicitly rather than inherited from the browser. */
+  :root {
+    --ink:        #101419;
+    --ink-2:      #171d25;
+    --ink-3:      #1e2632;
+    --line:       #2a3444;
+    --chalk:      #e9ecf1;
+    --muted:      #8795a9;
+    --paper:      #f5f0e3;
+    --paper-edge: #ded4bd;
+    --tag-ink:    #15191f;
+    --amber:      #f6c445;
+    --mint:       #63d2a0;
+    --rose:       #ef7a6d;
+
+    --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+    --body:    "Karla", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono:    "Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --radius: 10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--ink);
+    /* Faint pool of light, so the "tags on a table" reading lands. */
+    background-image: radial-gradient(120% 70% at 50% -10%, #1b2331 0%, var(--ink) 60%);
+    color: var(--chalk);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  #app {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* ---------------------------------------------------------- typography */
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(2.6rem, 11vw, 4.2rem);
+    line-height: 0.94;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+    color: var(--chalk);
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.3rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--chalk);
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 42ch;
+    font-size: 1.05rem;
+    color: var(--muted);
+  }
+  .lede strong { color: var(--chalk); font-weight: 700; }
+
+  /* -------------------------------------------------------------- masthead */
+
+  .masthead { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ---------------------------------------------------------------- panels */
+
+  .panel {
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  .row   { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .row > .grow { flex: 1 1 140px; }
+
+  /* --------------------------------------------------------------- inputs */
+
+  label.field { display: flex; flex-direction: column; gap: 6px; }
+
+  input[type="text"], textarea {
+    font-family: var(--body);
+    font-size: 1rem;
+    color: var(--chalk);
+    background: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 13px;
+    width: 100%;
+    transition: border-color 120ms ease;
+  }
+  input[type="text"]::placeholder, textarea::placeholder { color: #5d6a7d; }
+  input[type="text"]:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 1px;
+    border-color: var(--amber);
+  }
+  textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+
+  input.code-input {
+    font-family: var(--mono);
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 10px 13px;
+  }
+
+  /* -------------------------------------------------------------- buttons */
+
+  button {
+    font-family: var(--body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: transform 90ms ease, background-color 120ms ease, border-color 120ms ease;
+  }
+  button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  button:active { transform: translateY(1px); }
+  button:disabled { cursor: not-allowed; opacity: 0.45; }
+  button:disabled:active { transform: none; }
+
+  .btn-primary { background: var(--amber); color: #1b1502; }
+  .btn-primary:not(:disabled):hover { background: #ffd45f; }
+
+  .btn-ghost { background: transparent; color: var(--chalk); border-color: var(--line); }
+  .btn-ghost:not(:disabled):hover { border-color: var(--muted); background: var(--ink-3); }
+
+  .btn-quiet { background: transparent; color: var(--muted); border-color: transparent; padding: 8px 10px; font-weight: 500; }
+  .btn-quiet:not(:disabled):hover { color: var(--chalk); }
+
+  .btn-danger { background: transparent; color: var(--rose); border-color: transparent; padding: 4px 8px; font-size: 0.8rem; font-weight: 500; }
+  .btn-danger:not(:disabled):hover { background: rgba(239,122,109,0.12); }
+
+  /* --------------------------------------------------------- room code */
+
+  .code-block {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .code-value {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: clamp(2rem, 9vw, 2.9rem);
+    letter-spacing: 0.2em;
+    color: var(--amber);
+    line-height: 1;
+    /* Trailing letter-spacing would push the glyphs off-centre. */
+    margin-right: -0.2em;
+  }
+
+  /* ------------------------------------------------------------ divider */
+
+  .or {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  /* ------------------------------------------------------- player roster */
+
+  .roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .roster li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .roster li:last-child { border-bottom: 0; }
+  .roster .who { font-weight: 500; }
+  .roster .who.offline { color: var(--muted); }
+  .roster .spacer { flex: 1; }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--mint); }
+  .dot.off { background: #4a566a; }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .badge.host { color: var(--amber); border-color: rgba(246,196,69,0.4); }
+  .badge.you  { color: var(--chalk); }
+
+  /* ---------------------------------------------------------- name tags */
+
+  .tag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+  }
+
+  .tag {
+    position: relative;
+    background: var(--paper);
+    border-radius: 6px;
+    padding: 13px 15px 16px;
+    box-shadow: 0 1px 0 var(--paper-edge), 0 10px 22px -14px rgba(0,0,0,0.85);
+    rotate: var(--rot, 0deg);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  /* The perforated strip across the top of a real stick-on badge. */
+  .tag::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    border-radius: 6px 6px 0 0;
+    background: var(--amber);
+  }
+
+  .tag .tag-name {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7b7460;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+  }
+  .tag .tag-word {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--tag-ink);
+    overflow-wrap: anywhere;
+  }
+  .tag .tag-word.waiting {
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #8b8371;
+  }
+  .tag.offline { opacity: 0.5; }
+
+  .badge.score {
+    background: #2b3648;
+    color: #cfe3ff;
+    font-variant-numeric: tabular-nums;
+  }
+  .tag-score {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #8a7f68;
+  }
+  .tag-reveal {
+    margin-top: 8px;
+    width: 100%;
+    font: 700 11px/1 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1d2530;
+    background: #cbb989;
+    border: 1px solid #b6a276;
+    border-radius: 4px;
+    padding: 7px 4px;
+    cursor: pointer;
+  }
+  .tag-reveal:hover { background: #d9c99f; }
+  .tag-reveal[disabled] { opacity: 0.45; cursor: default; }
+
+  .board { list-style: none; margin: 0; padding: 0; }
+  .board li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px;
+  }
+  .board li + li { margin-top: 8px; }
+  .board .place {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: #5d6a7d; min-width: 2.2em;
+  }
+  .board .who { font-weight: 650; flex: 1; }
+  .board .pts { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .board li.first { border-color: #cbb989; background: rgba(203,185,137,0.08); }
+
+  .tag-redeal {
+    margin-top: 8px;
+    width: 100%;
+    font: 600 11px/1 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6d6455;
+    background: transparent;
+    border: 1px dashed #b9ae95;
+    border-radius: 4px;
+    padding: 6px 4px;
+    cursor: pointer;
+  }
+  .tag-redeal:hover { background: #e6dcc8; color: #43403a; }
+
+  /* Character portrait. Only ever rendered for a word you are allowed to see. */
+  .tag-portrait {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #ded6c4;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .tag-initials {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border-radius: 4px;
+    background: #ded6c4;
+    margin-bottom: 8px;
+    display: grid;
+    place-items: center;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 2.2rem;
+    color: #9a8f77;
+    letter-spacing: 0.04em;
+  }
+  .tag-self .tag-portrait, .tag-self .tag-initials { max-width: 260px; margin-inline: auto; }
+
+  /* Pack picker */
+  .pack { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .pack + .pack { margin-top: 8px; }
+  .pack-head { display: flex; align-items: center; gap: 8px; }
+  .pack-head label { font-weight: 650; cursor: pointer; flex: 1; }
+  .pack-count { font-family: var(--mono); font-size: 11px; color: #5d6a7d; }
+  .pack-tiers { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; padding-left: 24px; }
+  .pack-tiers.is-off { opacity: 0.35; pointer-events: none; }
+  .pack-tiers label {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; font-family: var(--mono); cursor: pointer;
+  }
+
+  /* Your own tag: the whole point of the game. */
+  .tag-self { grid-column: 1 / -1; rotate: -0.4deg; padding-bottom: 18px; }
+  .tag-self .tag-word { font-size: 1.9rem; }
+
+  .redaction {
+    position: relative;
+    background: #0c0f13;
+    border-radius: 3px;
+    padding: 15px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .redaction::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.5;
+    background: repeating-linear-gradient(115deg, transparent 0 7px, rgba(255,255,255,0.05) 7px 14px);
+  }
+  .redaction span {
+    position: relative;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #6d7787;
+  }
+
+  /* --------------------------------------------------------------- misc */
+
+  .hint { margin: 0; font-size: 0.85rem; color: var(--muted); }
+  .hint.warn { color: var(--amber); }
+  .hint.bad  { color: var(--rose); }
+  .hint code { font-family: var(--mono); font-size: 0.8rem; color: var(--chalk); }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .banner {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    background: var(--ink-3);
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    font-size: 0.88rem;
+    padding: 9px 16px;
+    border-radius: 999px;
+    box-shadow: 0 12px 30px -12px rgba(0,0,0,0.9);
+    z-index: 10;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+
+  .tag-enter { animation: settle 340ms cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(-7px) scale(0.985); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="masthead">
+    <h1>Danny's Head's Up</h1>
+  </header>
+
+  <!-- ============================================================ HOME -->
+  <section id="screen-home" class="stack">
+    <div class="panel">
+      <label class="field">
+        <span class="eyebrow">Your name</span>
+        <input type="text" id="name-input" maxlength="20" autocomplete="nickname" placeholder="e.g. Daniel">
+      </label>
+      <div class="actions">
+        <button class="btn-primary" id="btn-start">Start a new session</button>
+      </div>
+      <div class="or">or join one</div>
+      <div class="row">
+        <label class="field grow">
+          <span class="eyebrow">Room code</span>
+          <input type="text" id="code-input" class="code-input" maxlength="4" inputmode="latin"
+                 autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABCD">
+        </label>
+        <button class="btn-ghost" id="btn-join">Join</button>
+      </div>
+      <p class="hint" id="home-error" hidden></p>
+    </div>
+    <p class="hint">
+      Best with 3 or more people in the same room. Your own word is decided and stored on the
+      server and never sent to your browser — so you can't find it by peeking.
+    </p>
+  </section>
+
+  <!-- =========================================================== LOBBY -->
+  <section id="screen-lobby" class="stack" hidden>
+    <div class="panel">
+      <div class="code-block">
+        <div>
+          <p class="eyebrow">Room code</p>
+          <div class="code-value" id="lobby-code">----</div>
+        </div>
+        <button class="btn-ghost" id="btn-copy">Copy invite link</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>In the room</h2>
+      <ul class="roster" id="lobby-roster" aria-live="polite"></ul>
+    </div>
+
+    <!-- Host only: the preset packs -->
+    <div class="panel" id="host-panel" hidden>
+      <div class="stack">
+        <div>
+          <h2>Character packs</h2>
+          <p class="hint">Tick a series, then choose which tiers to draw from. Main characters are
+            the recognisable ones; background is deep-cut extras.</p>
+        </div>
+        <div id="pack-list"></div>
+        <label class="pack-tiers" style="padding-left:0">
+          <input type="checkbox" id="pack-artless">
+          <span>Include characters with no artwork (they show initials instead)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Everyone: your own suggestions -->
+    <div class="panel" id="bank-panel" hidden>
+      <div class="stack">
+        <div>
+          <h2 id="bank-heading">Your own words</h2>
+          <p class="hint" id="bank-note"></p>
+        </div>
+        <textarea id="bank-input" placeholder="Kermit the Frog, SpongeBob, a raccoon in a trench coat"></textarea>
+        <p class="hint" id="bank-status">No words yet.</p>
+
+        <!-- Host only: names the host wants in play but can't be given -->
+        <div id="blocked-wrap" hidden>
+          <div style="margin-top: 4px;">
+            <h2>Words not for you</h2>
+            <p class="hint">Same pool, but these are never dealt to you — so you can suggest
+              names you already know without spoiling your own round.</p>
+          </div>
+          <textarea id="blocked-input" placeholder="Gonzo, Miss Piggy"></textarea>
+          <p class="hint" id="blocked-status"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Host only: starting the round -->
+    <div class="panel" id="deal-panel" hidden>
+      <div class="stack">
+        <p class="hint" id="seen-status"></p>
+        <div class="actions">
+          <button class="btn-primary" id="btn-deal">Deal the characters</button>
+          <button class="btn-ghost" id="btn-reset-seen">Reset seen characters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guest only -->
+    <div class="panel" id="guest-wait" hidden>
+      <h2>Waiting for the host</h2>
+      <p class="hint" id="guest-wait-note">They're writing the word bank. Sit tight.</p>
+      <div class="actions" id="claim-host-wrap" hidden>
+        <button class="btn-ghost" id="btn-claim-host">Take over as host</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-quiet" id="btn-leave-lobby">Leave the room</button>
+    </div>
+  </section>
+
+  <!-- ===================================================== LEADERBOARD -->
+  <section id="screen-board" class="stack" hidden>
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <p class="eyebrow">Final standings</p>
+      <p class="eyebrow" id="board-code">Room ----</p>
+    </div>
+
+    <div class="panel">
+      <ul class="board" id="board-list"></ul>
+    </div>
+
+    <div class="panel" id="board-host-panel" hidden>
+      <h2>Host controls</h2>
+      <p class="hint">Same people, fresh scores and a clean run of characters.</p>
+      <div class="actions">
+        <button class="btn-primary" id="btn-new-match">Back to the lobby</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-quiet" id="btn-leave-board">Leave the room</button>
+    </div>
+  </section>
+
+  <!-- ============================================================ PLAY -->
+  <section id="screen-play" class="stack" hidden>
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <p class="eyebrow" id="play-round">Round 1</p>
+      <p class="eyebrow" id="play-code">Room ----</p>
+    </div>
+
+    <div class="tag-grid" id="tag-grid"></div>
+
+    <div class="panel" id="play-host-panel" hidden>
+      <h2>Host controls</h2>
+      <div class="actions">
+        <button class="btn-primary" id="btn-redeal">Deal again</button>
+        <button class="btn-ghost" id="btn-reveal">Reveal everyone</button>
+        <button class="btn-danger" id="btn-end-match">End the match</button>
+        <button class="btn-ghost" id="btn-lobby">Back to the lobby</button>
+      </div>
+      <p class="hint" id="play-host-note"></p>
+    </div>
+
+    <div class="actions">
+      <button class="btn-quiet" id="btn-leave-play">Leave the room</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="banner" id="banner" role="status" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var KEY_PID  = "blindspot.pid";
+  var KEY_NAME = "blindspot.name";
+
+  // ------------------------------------------------------------ tiny helpers
+
+  function $(id) { return document.getElementById(id); }
+
+  /** Build an element. Text always goes in as text, never as HTML, so a player
+   *  called <script> is just a silly name and not a security hole. */
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function store(key, value) {
+    try { if (value === undefined) return localStorage.getItem(key); localStorage.setItem(key, value); }
+    catch (e) { return null; }
+  }
+
+  function normalizeCode(raw) {
+    var out = "";
+    var up = String(raw || "").toUpperCase();
+    for (var i = 0; i < up.length && out.length < 4; i++) {
+      if (CODE_ALPHABET.indexOf(up[i]) !== -1) out += up[i];
+    }
+    return out;
+  }
+
+  var bannerTimer = null;
+  function banner(message, ms) {
+    var node = $("banner");
+    if (!message) { node.hidden = true; return; }
+    node.textContent = message;
+    node.hidden = false;
+    if (bannerTimer) clearTimeout(bannerTimer);
+    if (ms) bannerTimer = setTimeout(function () { node.hidden = true; }, ms);
+  }
+
+  function homeError(message) {
+    var node = $("home-error");
+    if (!message) { node.hidden = true; return; }
+    node.textContent = message;
+    node.className = "hint bad";
+    node.hidden = false;
+  }
+
+  // ------------------------------------------------------------------- state
+
+  var S = {
+    ws: null,
+    connected: false,
+    wantConnected: false,
+    code: "",
+    pid: store(KEY_PID) || "",
+    name: store(KEY_NAME) || "",
+    state: null,
+    retries: 0,
+    reconnectTimer: null,
+    pingTimer: null,
+    bankTimer: null,
+    blockedTimer: null,
+    packsBuilt: false,
+    lastRound: 0
+  };
+
+  // -------------------------------------------------------------- networking
+
+  function send(obj) {
+    if (S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify(obj));
+  }
+
+  function connect(code) {
+    S.code = code;
+    S.wantConnected = true;
+    if (location.hash.slice(1) !== code) history.replaceState(null, "", "#" + code);
+
+    var scheme = location.protocol === "https:" ? "wss:" : "ws:";
+    var ws = new WebSocket(scheme + "//" + location.host + "/ws?code=" + encodeURIComponent(code));
+    S.ws = ws;
+
+    ws.onopen = function () {
+      S.connected = true;
+      S.retries = 0;
+      banner(null);
+      send({ t: "join", pid: S.pid || undefined, name: S.name });
+      if (S.pingTimer) clearInterval(S.pingTimer);
+      // Keeps the connection from being culled as idle by a phone or a proxy.
+      S.pingTimer = setInterval(function () { send({ t: "ping" }); }, 25000);
+    };
+
+    ws.onmessage = function (event) {
+      var msg;
+      try { msg = JSON.parse(event.data); } catch (e) { return; }
+
+      if (msg.t === "joined") {
+        S.pid = msg.pid;
+        store(KEY_PID, msg.pid);
+        return;
+      }
+      if (msg.t === "state") {
+        S.state = msg;
+        render();
+        return;
+      }
+      if (msg.t === "error") {
+        banner(msg.message, msg.fatal ? 0 : 4000);
+        if (msg.fatal) { S.wantConnected = false; homeError(msg.message); showScreen("home"); }
+        return;
+      }
+    };
+
+    ws.onclose = function () {
+      S.connected = false;
+      if (S.pingTimer) { clearInterval(S.pingTimer); S.pingTimer = null; }
+      if (!S.wantConnected) return;
+      S.retries += 1;
+      if (S.retries > 8) { banner("Lost the connection. Reload to rejoin.", 0); return; }
+      banner("Reconnecting…", 0);
+      var delay = Math.min(800 * Math.pow(1.7, S.retries - 1), 8000);
+      S.reconnectTimer = setTimeout(function () { connect(S.code); }, delay);
+    };
+
+    ws.onerror = function () { /* onclose always follows; handled there. */ };
+  }
+
+  function leave() {
+    S.wantConnected = false;
+    if (S.reconnectTimer) clearTimeout(S.reconnectTimer);
+    if (S.pingTimer) clearInterval(S.pingTimer);
+    if (S.ws) { try { S.ws.close(1000, "left"); } catch (e) {} }
+    S.ws = null;
+    S.state = null;
+    S.code = "";
+    history.replaceState(null, "", location.pathname);
+    banner(null);
+    showScreen("home");
+  }
+
+  // -------------------------------------------------------------- rendering
+
+  function showScreen(which) {
+    $("screen-home").hidden  = which !== "home";
+    $("screen-lobby").hidden = which !== "lobby";
+    $("screen-play").hidden  = which !== "play";
+    $("screen-board").hidden = which !== "board";
+  }
+
+  function render() {
+    var st = S.state;
+    if (!st) return;
+
+    if (st.phase === "leaderboard") { showScreen("board"); renderBoard(st); }
+    else if (st.phase === "playing")  { showScreen("play"); renderPlay(st); }
+    else { showScreen("lobby"); renderLobby(st); }
+  }
+
+  function renderLobby(st) {
+    $("lobby-code").textContent = st.code;
+
+    // Roster
+    var list = $("lobby-roster");
+    list.textContent = "";
+    st.players.forEach(function (p) {
+      var li = el("li");
+      li.appendChild(el("span", "dot" + (p.online ? "" : " off")));
+      li.appendChild(el("span", "who" + (p.online ? "" : " offline"), p.name));
+      if (p.isHost)          li.appendChild(el("span", "badge host", "Host"));
+      if (p.pid === st.you.pid) li.appendChild(el("span", "badge you", "You"));
+      if (p.score) li.appendChild(el("span", "badge score", p.score + (p.score === 1 ? " pt" : " pts")));
+      li.appendChild(el("span", "spacer"));
+      if (st.you.isHost && p.pid !== st.you.pid) {
+        var kick = el("button", "btn-danger", "Remove");
+        kick.addEventListener("click", function () { send({ t: "kick", pid: p.pid }); });
+        li.appendChild(kick);
+      }
+      list.appendChild(li);
+    });
+
+    // Packs and the deal button are the host's. The word bank is everyone's.
+    $("host-panel").hidden = !st.you.isHost;
+    $("deal-panel").hidden = !st.you.isHost;
+    $("bank-panel").hidden = false;
+    $("guest-wait").hidden = st.you.isHost;
+
+    if (st.you.isHost) {
+      renderPacks(st);
+
+      var seen = st.seenCount || 0;
+      $("seen-status").textContent = seen
+        ? seen + " of " + st.wordCount + " already used this match — those come up last."
+        : "No characters used yet this match.";
+      $("btn-reset-seen").disabled = seen === 0;
+      $("btn-deal").disabled = st.wordCount === 0;
+    } else {
+      $("claim-host-wrap").hidden = st.hostOnline;
+      $("guest-wait-note").textContent = st.hostOnline
+        ? "They're picking the character packs. Add your own words below if you like."
+        : "The host has dropped offline.";
+    }
+
+    // ---- everyone's own word bank ----
+    $("bank-note").textContent = st.you.isHost
+      ? "Optional, added on top of the packs. Separate with commas. Typed entries have no picture."
+      : "Added to the shared pool, but never dealt back to you — so you can suggest freely. " +
+        "Separate with commas.";
+
+    var bank = $("bank-input");
+    // Don't fight the cursor while somebody is typing.
+    if (document.activeElement !== bank && typeof st.bankText === "string" && bank.value !== st.bankText) {
+      bank.value = st.bankText;
+    }
+
+    // A guest's main bank is already excluded from them, so a second box would
+    // do nothing. Only the host, whose main bank is global, needs one.
+    $("blocked-wrap").hidden = !st.you.isHost;
+    if (st.you.isHost) {
+      var blocked = $("blocked-input");
+      if (document.activeElement !== blocked && typeof st.blockedText === "string" &&
+          blocked.value !== st.blockedText) {
+        blocked.value = st.blockedText;
+      }
+      var nb = st.yourBlockedEntries || 0;
+      $("blocked-status").textContent = nb
+        ? nb + (nb === 1 ? " word" : " words") + " in play that you can't be dealt."
+        : "";
+    }
+
+    var words   = st.wordCount;
+    var players = st.players.length;
+    var mine    = st.yourEntries || 0;
+    var status  = $("bank-status");
+    var mineToo = st.yourBlockedEntries || 0;
+    var total   = mine + mineToo;
+    var yours   = total ? " You added " + total + "." : "";
+
+    if (words === 0) {
+      status.className = "hint";
+      status.textContent = "No words yet.";
+    } else if (words < players) {
+      status.className = "hint warn";
+      status.textContent = words + (words === 1 ? " word" : " words") + " for " + players +
+        " players — some will be handed out more than once." + yours;
+    } else {
+      status.className = "hint";
+      status.textContent = words + " words ready for " + players +
+        (players === 1 ? " player." : " players.") + yours;
+    }
+  }
+
+  function renderPlay(st) {
+    $("play-round").textContent = "Round " + st.round;
+    $("play-code").textContent = "Room " + st.code;
+
+    var fresh = st.round !== S.lastRound;
+    S.lastRound = st.round;
+
+    var grid = $("tag-grid");
+    grid.textContent = "";
+
+    var me = null;
+    var others = [];
+    st.players.forEach(function (p) {
+      if (p.pid === st.you.pid) me = p; else others.push(p);
+    });
+
+    if (me) grid.appendChild(selfTag(me, st, fresh));
+
+    others.forEach(function (p, i) {
+      var tag = el("div", "tag" + (p.online ? "" : " offline") + (fresh ? " tag-enter" : ""));
+      // Alternating slight rotation reads as physical tags rather than boxes.
+      tag.style.setProperty("--rot", (i % 2 ? 0.5 : -0.5) + "deg");
+      if (fresh) tag.style.animationDelay = Math.min(i * 45 + 60, 500) + "ms";
+
+      if (p.hasWord) {
+        paintWord(tag, p.word);
+      } else {
+        tag.appendChild(el("div", "tag-word waiting", "No word this round"));
+      }
+      tag.appendChild(el("div", "tag-name", p.name + (p.online ? "" : " · away")));
+      tag.appendChild(el("div", "tag-score", p.score + (p.score === 1 ? " pt" : " pts") +
+        (p.revealed ? " · got it" : "")));
+
+      if (st.you.isHost) {
+        // Points are awarded here, so this is the button the host presses the
+        // moment somebody says the right name out loud.
+        var got = el("button", "tag-reveal",
+          p.revealed ? "Already revealed" : "They got it (+" + pointsNext(st) + ")");
+        got.disabled = p.revealed || !p.hasWord;
+        got.addEventListener("click", function () { send({ t: "revealOne", pid: p.pid }); });
+        tag.appendChild(got);
+
+        var again = el("button", "tag-redeal", "Re-deal " + p.name);
+        again.addEventListener("click", function () {
+          send({ t: "redealOne", pid: p.pid });
+        });
+        tag.appendChild(again);
+      }
+
+      grid.appendChild(tag);
+    });
+
+    if (others.length === 0) {
+      var empty = el("p", "hint", "Nobody else is here yet. Share the code " + st.code + " to fill the room.");
+      grid.appendChild(empty);
+    }
+
+    $("play-host-panel").hidden = !st.you.isHost;
+    if (st.you.isHost) {
+      $("btn-reveal").disabled = st.revealed;
+      var seen = st.seenCount || 0;
+      var left = Math.max(0, (st.wordCount || 0) - seen);
+      $("play-host-note").textContent = st.revealed
+        ? "Characters are revealed — everyone can now see their own."
+        : "“Deal again” gives everybody a fresh character. " + left +
+          " of " + st.wordCount + " not yet used this match.";
+    }
+  }
+
+  /**
+   * Draw one character: portrait above, name below.
+   *
+   * Only ever called with a word the server actually sent us. We never build an
+   * <img> from the full bank, because the browser fetching your own portrait
+   * would leak it through the network tab and the cache even though the state
+   * message withheld it.
+   */
+  function paintWord(tag, word) {
+    var name = typeof word === "string" ? word : (word && word.name) || "";
+    var image = typeof word === "string" ? "" : (word && word.image) || "";
+
+    if (image) {
+      var img = el("img", "tag-portrait");
+      img.src = image;
+      img.alt = "";
+      img.loading = "lazy";
+      // A dead CDN link falls back to initials rather than a broken-image icon.
+      img.addEventListener("error", function () {
+        var ph = initialsBlock(name);
+        if (img.parentNode) img.parentNode.replaceChild(ph, img);
+      });
+      tag.appendChild(img);
+    } else {
+      tag.appendChild(initialsBlock(name));
+    }
+    tag.appendChild(el("div", "tag-word", name));
+  }
+
+  function initialsBlock(name) {
+    var letters = String(name).split(/\s+/).filter(Boolean).slice(0, 2)
+      .map(function (w) { return w[0]; }).join("").toUpperCase();
+    return el("div", "tag-initials", letters || "?");
+  }
+
+  /** Mirrors the server: first home earns one point per opponent, then one less each time. */
+  function pointsNext(st) {
+    var done = st.players.filter(function (p) { return p.revealed; }).length;
+    return Math.max(0, st.players.length - 1 - done);
+  }
+
+  /** Standings, highest first, with ties sharing a place. */
+  function renderBoard(st) {
+    $("board-code").textContent = "Room " + st.code;
+    var list = $("board-list");
+    list.textContent = "";
+
+    var ranked = st.players.slice().sort(function (a, b) {
+      return b.score - a.score || a.name.localeCompare(b.name);
+    });
+
+    var place = 0, shown = 0, lastScore = null;
+    ranked.forEach(function (p) {
+      shown += 1;
+      if (p.score !== lastScore) { place = shown; lastScore = p.score; }
+
+      var li = el("li", place === 1 ? "first" : null);
+      li.appendChild(el("span", "place", "#" + place));
+      li.appendChild(el("span", "who", p.name));
+      if (p.pid === st.you.pid) li.appendChild(el("span", "badge you", "You"));
+      li.appendChild(el("span", "pts", p.score + (p.score === 1 ? " pt" : " pts")));
+      list.appendChild(li);
+    });
+
+    $("board-host-panel").hidden = !st.you.isHost;
+  }
+
+  var TIERS = [["MAIN", "Main"], ["SUPPORTING", "Supporting"], ["BACKGROUND", "Background"]];
+
+  /**
+   * The host's series picker. Built once from the catalogue, then only its
+   * checkbox states are synced, so ticking a box never rebuilds the DOM under
+   * the cursor.
+   */
+  function renderPacks(st) {
+    if (!st.packCatalog) return;
+    var list = $("pack-list");
+
+    if (!S.packsBuilt) {
+      st.packCatalog.forEach(function (pack) {
+        var row = el("div", "pack");
+        var head = el("div", "pack-head");
+
+        var on = document.createElement("input");
+        on.type = "checkbox";
+        on.id = "pack-on-" + pack.series;
+        on.addEventListener("change", function () { pushPacks(st.packCatalog); });
+
+        var lab = document.createElement("label");
+        lab.htmlFor = on.id;
+        lab.textContent = pack.series;
+
+        head.appendChild(on);
+        head.appendChild(lab);
+        head.appendChild(el("span", "pack-count", ""));
+        row.appendChild(head);
+
+        var tiers = el("div", "pack-tiers");
+        tiers.id = "pack-tiers-" + pack.series;
+        TIERS.forEach(function (t) {
+          var wrap = document.createElement("label");
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.dataset.series = pack.series;
+          cb.dataset.tier = t[0];
+          // Main characters are the playable default; the rest are opt-in.
+          cb.checked = t[0] === "MAIN";
+          cb.addEventListener("change", function () { pushPacks(st.packCatalog); });
+          var n = pack.tiers[t[0]];
+          wrap.appendChild(cb);
+          wrap.appendChild(el("span", null, t[1] + " (" + n.withArt + ")"));
+          tiers.appendChild(wrap);
+        });
+        row.appendChild(tiers);
+        list.appendChild(row);
+      });
+
+      $("pack-artless").addEventListener("change", function () { pushPacks(st.packCatalog); });
+      S.packsBuilt = true;
+    }
+
+    // Sync from the server so a rejoining host sees the real selection.
+    st.packCatalog.forEach(function (pack) {
+      var sel = (st.packSel || {})[pack.series];
+      var on = $("pack-on-" + pack.series);
+      if (document.activeElement !== on) on.checked = !!sel;
+      var tiers = $("pack-tiers-" + pack.series);
+      tiers.classList.toggle("is-off", !on.checked);
+
+      var count = 0;
+      TIERS.forEach(function (t) {
+        var cb = tiers.querySelector('input[data-tier="' + t[0] + '"]');
+        if (sel && document.activeElement !== cb) cb.checked = !!sel[t[0]];
+        if (on.checked && cb.checked) {
+          count += st.includeArtless ? pack.tiers[t[0]].total : pack.tiers[t[0]].withArt;
+        }
+      });
+      on.parentNode.querySelector(".pack-count").textContent = count ? count + " chars" : "";
+    });
+
+    if (document.activeElement !== $("pack-artless")) {
+      $("pack-artless").checked = !!st.includeArtless;
+    }
+  }
+
+  function pushPacks(catalog) {
+    var selection = {};
+    catalog.forEach(function (pack) {
+      if (!$("pack-on-" + pack.series).checked) return;
+      var tiers = $("pack-tiers-" + pack.series);
+      var picked = {};
+      TIERS.forEach(function (t) {
+        picked[t[0]] = tiers.querySelector('input[data-tier="' + t[0] + '"]').checked;
+      });
+      selection[pack.series] = picked;
+    });
+    send({ t: "setPacks", selection: selection, includeArtless: $("pack-artless").checked });
+  }
+
+  function selfTag(me, st, fresh) {
+    var tag = el("div", "tag tag-self" + (fresh ? " tag-enter" : ""));
+
+    // The server only ever sends you your own character once you are allowed
+    // to see it, so holding it IS the permission. Testing `st.revealed` here
+    // was wrong: it left an individually-revealed player staring at a
+    // redaction bar while everyone else could see they had been revealed.
+    if (me.word) {
+      paintWord(tag, me.word);
+      tag.appendChild(el("div", "tag-name", me.name + " · revealed"));
+      tag.appendChild(el("div", "tag-score", me.score + (me.score === 1 ? " pt" : " pts")));
+      return tag;
+    }
+    if (!me.hasWord) {
+      tag.appendChild(el("div", "tag-word waiting", "You'll get a word on the next deal."));
+      tag.appendChild(el("div", "tag-name", me.name));
+      return tag;
+    }
+
+    var bar = el("div", "redaction");
+    bar.appendChild(el("span", null, "Hidden from you"));
+    tag.appendChild(bar);
+    tag.appendChild(el("div", "tag-name", me.name + " · ask the others"));
+    tag.appendChild(el("div", "tag-score", me.score + (me.score === 1 ? " pt" : " pts")));
+
+    if (st.you.isHost) {
+      // The host guesses too, so they need their own scoring button.
+      var got = el("button", "tag-reveal", "I got it (+" + pointsNext(st) + ")");
+      got.addEventListener("click", function () { send({ t: "revealOne", pid: me.pid }); });
+      tag.appendChild(got);
+
+      // Re-dealing yourself is safe: the server picks the character and strips
+      // it from your own copy of the state, as it does for anyone else.
+      var again = el("button", "tag-redeal", "Re-deal me");
+      again.addEventListener("click", function () {
+        send({ t: "redealOne", pid: me.pid });
+      });
+      tag.appendChild(again);
+    }
+    return tag;
+  }
+
+  // ------------------------------------------------------------------ events
+
+  function readName() {
+    var name = $("name-input").value.replace(/\s+/g, " ").trim().slice(0, 20);
+    if (!name) { homeError("Enter a name first so people know who you are."); return null; }
+    S.name = name;
+    store(KEY_NAME, name);
+    homeError(null);
+    return name;
+  }
+
+  $("btn-start").addEventListener("click", function () {
+    if (!readName()) return;
+    var btn = $("btn-start");
+    btn.disabled = true;
+    btn.textContent = "Creating…";
+    fetch("/api/new-room")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.code) throw new Error(data.error || "No code returned");
+        connect(data.code);
+      })
+      .catch(function () { homeError("Couldn't create a room. Check your connection and try again."); })
+      .then(function () { btn.disabled = false; btn.textContent = "Start a new session"; });
+  });
+
+  $("btn-join").addEventListener("click", function () {
+    var code = normalizeCode($("code-input").value);
+    if (code.length !== 4) { homeError("A room code is 4 letters or digits."); return; }
+    if (!readName()) return;
+    connect(code);
+  });
+
+  $("code-input").addEventListener("input", function (e) {
+    e.target.value = normalizeCode(e.target.value);
+  });
+
+  $("code-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") $("btn-join").click();
+  });
+  $("name-input").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    if (normalizeCode($("code-input").value).length === 4) $("btn-join").click();
+    else $("btn-start").click();
+  });
+
+  $("btn-copy").addEventListener("click", function () {
+    var link = location.origin + location.pathname + "#" + S.code;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(
+        function () { banner("Invite link copied", 2200); },
+        function () { banner(link, 6000); }
+      );
+    } else {
+      banner(link, 6000);
+    }
+  });
+
+  // Debounced so every keystroke isn't a network round-trip.
+  $("bank-input").addEventListener("input", function () {
+    if (S.bankTimer) clearTimeout(S.bankTimer);
+    S.bankTimer = setTimeout(function () {
+      send({ t: "setBank", text: $("bank-input").value });
+    }, 350);
+  });
+
+  $("blocked-input").addEventListener("input", function () {
+    if (S.blockedTimer) clearTimeout(S.blockedTimer);
+    S.blockedTimer = setTimeout(function () {
+      send({ t: "setBlockedBank", text: $("blocked-input").value });
+    }, 350);
+  });
+
+  $("btn-deal").addEventListener("click", function () {
+    // Flush any pending edits first so we deal from what's on screen. Without
+    // this, words typed in the last 350ms would miss the round.
+    if (S.bankTimer) { clearTimeout(S.bankTimer); S.bankTimer = null; }
+    if (S.blockedTimer) { clearTimeout(S.blockedTimer); S.blockedTimer = null; }
+    send({ t: "setBank", text: $("bank-input").value });
+    send({ t: "setBlockedBank", text: $("blocked-input").value });
+    send({ t: "deal" });
+  });
+
+  $("btn-redeal").addEventListener("click", function () { send({ t: "deal" }); });
+  $("btn-reveal").addEventListener("click", function () { send({ t: "reveal" }); });
+  $("btn-end-match").addEventListener("click", function () { send({ t: "endMatch" }); });
+  $("btn-reset-seen").addEventListener("click", function () { send({ t: "resetSeen" }); });
+  $("btn-new-match").addEventListener("click", function () { send({ t: "newMatch" }); });
+  $("btn-leave-board").addEventListener("click", leave);
+  $("btn-lobby").addEventListener("click", function () { send({ t: "backToLobby" }); });
+  $("btn-claim-host").addEventListener("click", function () { send({ t: "claimHost" }); });
+  $("btn-leave-lobby").addEventListener("click", leave);
+  $("btn-leave-play").addEventListener("click", leave);
+
+  // ------------------------------------------------------------------- boot
+
+  $("name-input").value = S.name;
+  var hashCode = normalizeCode(location.hash.slice(1));
+  if (hashCode.length === 4) {
+    $("code-input").value = hashCode;
+    if (S.name) connect(hashCode);          // returning player: straight back in
+    else $("name-input").focus();           // invited by link: just needs a name
+  } else {
+    $("name-input").focus();
+  }
+})();
+</script>
+</body>
+</html>

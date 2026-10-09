@@ -1,0 +1,32 @@
+{
+  // Cloudflare reads this file to know how to build and deploy your app.
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Becomes part of your public URL: https://dannys-heads-up.<your-subdomain>.workers.dev
+  "name": "dannys-heads-up",
+
+  // The server-side code (the router + the Durable Object).
+  "main": "src/index.js",
+
+  // Pins which version of the Workers runtime behaviour you get, so a future
+  // platform change can't silently alter how your app behaves.
+  "compatibility_date": "2025-09-01",
+
+  // Everything in ./public is served as a plain static file. A request for "/"
+  // gets public/index.html without ever touching your Worker code.
+  "assets": { "directory": "./public" },
+
+  // Gives your Worker code a variable called `env.ROOMS` that it uses to look
+  // up a game room by name.
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "GameRoom" }]
+  },
+
+  // Durable Objects must be formally "registered" once. `new_sqlite_classes`
+  // (rather than `new_classes`) is the storage backend available on the free plan.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }],
+
+  // Turns on logging in the Cloudflare dashboard, which you'll want when
+  // something misbehaves in production.
+  "observability": { "enabled": true }
+}
